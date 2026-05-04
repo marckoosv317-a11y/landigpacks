@@ -286,7 +286,9 @@
       try {
         let coverUrl = '';
         if (file) {
+          console.log('Iniciando upload para bucket pcksimagem...');
           coverUrl = await PacksDB.uploadPreview(file);
+          console.log('Upload concluído! URL:', coverUrl);
         }
 
         await PacksDB.add({ 
