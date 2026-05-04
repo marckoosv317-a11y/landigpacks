@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Gerenciar Packs · Packs Grátis</title>
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../css/packs.css" />
+  <style>
+    .admin-header { padding: 32px 0 20px; }
+    .admin-header h1 {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.6px;
+      color: #fff; margin-bottom: 4px;
+    }
+    .admin-header h1 em { color: var(--accent-l); font-style: normal; }
+    .admin-header p { font-size: 13px; color: var(--muted); }
+
+    .btn-loading { opacity: 0.6; pointer-events: none; }
+
+    /* Custom scroll for tabs */
+    .admin-tabs::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../index.html" class="back-btn">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        Início
+      </a>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="topbar-logo">packs<span>grátis</span></span>
+        <button id="logout-btn" title="Sair" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#F87171;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0;">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="admin-header fade-in">
+      <h1>⚙️ Painel <em>Admin</em></h1>
+      <p>Adicione e gerencie os packs disponíveis em cada categoria</p>
+      <div class="conn-badge wait" id="conn-badge">
+        <span class="conn-dot"></span> Conectando ao Supabase…
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row fade-in" id="stats-row">
+      <div class="stat-box"><div class="stat-num">—</div><div class="stat-label">Total</div></div>
+      <div class="stat-box"><div class="stat-num">—</div><div class="stat-label">Canva</div></div>
+      <div class="stat-box"><div class="stat-num">—</div><div class="stat-label">CapCut</div></div>
+    </div>
+
+    <!-- FORM -->
+    <div class="admin-form fade-in">
+      <h2>➕ Adicionar novo pack</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="f-category">
+            <option value="canva">🎨 Canva</option>
+            <option value="audios-capcut">🎵 Áudios CapCut</option>
+            <option value="transicoes-capcut">⚡ Transições CapCut</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo / Subtipo</label>
+          <input id="f-type" type="text" placeholder="Ex: Stories, Posts…" autocomplete="off" />
+          <div class="type-hint">Define o filtro na página</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nome do pack</label>
+        <input id="f-name" type="text" placeholder="Ex: Pack Stories Elegantes" />
+      </div>
+
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="f-desc" placeholder="Breve descrição do conteúdo…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Link de download</label>
+        <input id="f-url" type="url" placeholder="https://drive.google.com/…" />
+      </div>
+
+      <button class="submit-btn" id="add-btn">
+        <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="width:18px;height:18px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Publicar pack
+      </button>
+    </div>
+
+    <!-- PACK LIST -->
+    <div style="margin-bottom:32px;">
+      <div class="filter-list-header">
+        <div class="section-title">
+          Packs publicados <span id="total-count">—</span>
+        </div>
+        <button id="clear-all-btn" style="font-size:11px;font-weight:700;color:#F87171;background:none;border:none;cursor:pointer;padding:4px 0;text-transform:uppercase;letter-spacing:0.5px;">
+          Limpar tudo
+        </button>
+      </div>
+
+      <div class="admin-tabs" id="admin-tabs">
+        <div class="admin-tab active" data-cat="all">Todos</div>
+        <div class="admin-tab" data-cat="canva">🎨 Canva</div>
+        <div class="admin-tab" data-cat="audios-capcut">🎵 Áudios</div>
+        <div class="admin-tab" data-cat="transicoes-capcut">⚡ Transições</div>
+      </div>
+
+      <div class="admin-list" id="admin-list">
+        <div class="empty-state"><span class="empty-icon">⏳</span><p>Carregando…</p></div>
+      </div>
+    </div>
+
+    <!-- Quick nav -->
+    <p class="section-label">Ver páginas públicas</p>
+    <div class="action-grid" style="margin-bottom: 32px;">
+      <a href="../canva/index.html" class="action-btn secondary" style="font-size:13px;">🎨 Página Canva</a>
+      <a href="../audios-capcut/index.html" class="action-btn secondary" style="font-size:13px;">🎵 Página Áudios</a>
+      <a href="../transicoes-capcut/index.html" class="action-btn secondary" style="font-size:13px;">⚡ Página Transições</a>
+    </div>
+
+    <div class="spacer"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/packs.js"></script>
+  <script>
+    let listFilter = 'all';
+    let allPacks   = [];
+
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function showToast(msg, duration = 2600) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    function setConnBadge(state) {
+      const b = document.getElementById('conn-badge');
+      b.className = 'conn-badge ' + state;
+      b.innerHTML = state === 'ok'
+        ? '<span class="conn-dot"></span> Supabase conectado'
+        : '<span class="conn-dot"></span> Erro de conexão';
+    }
+
+    function renderStats(packs) {
+      const cats = {'canva':0,'audios-capcut':0,'transicoes-capcut':0};
+      packs.forEach(p => { if (cats[p.category]!==undefined) cats[p.category]++; });
+      document.getElementById('stats-row').innerHTML = `
+        <div class="stat-box"><div class="stat-num">${packs.length}</div><div class="stat-label">Total</div></div>
+        <div class="stat-box"><div class="stat-num">${cats.canva}</div><div class="stat-label">Canva</div></div>
+        <div class="stat-box"><div class="stat-num">${cats['audios-capcut']+cats['transicoes-capcut']}</div><div class="stat-label">CapCut</div></div>`;
+    }
+
+    function renderList() {
+      const filtered = listFilter==='all' ? allPacks : allPacks.filter(p=>p.category===listFilter);
+      document.getElementById('total-count').textContent = allPacks.length;
+      const el = document.getElementById('admin-list');
+
+      if (!filtered.length) {
+        el.innerHTML = `<div class="empty-state" style="padding:32px 0;"><span class="empty-icon">📭</span><p>Nenhum pack nesta categoria.</p></div>`;
+        return;
+      }
+
+      const catLabel = {canva:'🎨 Canva','audios-capcut':'🎵 Áudios','transicoes-capcut':'⚡ Transições'};
+      el.innerHTML = filtered.map(p=>`
+        <div class="admin-pack-item" id="item-${p.id}">
+          <div class="admin-pack-info">
+            <div class="admin-pack-name">${esc(p.name)}</div>
+            <div class="admin-pack-meta">
+              <span class="admin-pack-cat">${catLabel[p.category]||p.category}</span>
+              <span>${esc(p.type)}</span>
+              <span>·</span>
+              <span>${PacksDB.formatDate(p.created_at)}</span>
+            </div>
+          </div>
+          <button class="delete-btn" onclick="handleDelete('${p.id}')" title="Remover">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>`).join('');
+    }
+
+    async function loadAll() {
+      try {
+        allPacks = await PacksDB.getAll();
+        setConnBadge('ok');
+        renderStats(allPacks);
+        renderList();
+      } catch(e) {
+        setConnBadge('err');
+        document.getElementById('admin-list').innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><p>Erro ao conectar ao Supabase.</p></div>`;
+      }
+    }
+
+    async function handleDelete(id) {
+      if (!confirm('Remover este pack?')) return;
+      try {
+        await PacksDB.delete(id);
+        showToast('✅ Pack removido.');
+        await loadAll();
+      } catch(e) {
+        showToast('⚠️ Erro ao remover.');
+      }
+    }
+    window.handleDelete = handleDelete;
+
+    document.getElementById('clear-all-btn').addEventListener('click', async () => {
+      if (!confirm('Remover TODOS os packs? Isso é irreversível.')) return;
+      try {
+        await PacksDB.deleteAll();
+        showToast('Todos os packs foram removidos.');
+        await loadAll();
+      } catch(e) {
+        showToast('⚠️ Erro ao limpar.');
+      }
+    });
+
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        listFilter = tab.dataset.cat;
+        renderList();
+      });
+    });
+
+    document.getElementById('add-btn').addEventListener('click', async () => {
+      const btn      = document.getElementById('add-btn');
+      const category = document.getElementById('f-category').value.trim();
+      const type     = document.getElementById('f-type').value.trim();
+      const name     = document.getElementById('f-name').value.trim();
+      const desc     = document.getElementById('f-desc').value.trim();
+      const url      = document.getElementById('f-url').value.trim();
+
+      if (!type || !name) { showToast('⚠️ Preencha Tipo e Nome.'); return; }
+
+      btn.classList.add('btn-loading');
+      btn.textContent = 'Publicando…';
+
+      try {
+        await PacksDB.add({ category, type, name, description: desc, downloadUrl: url || '#' });
+        document.getElementById('f-type').value = '';
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-desc').value = '';
+        document.getElementById('f-url').value  = '';
+        showToast('✅ Pack publicado com sucesso!');
+        await loadAll();
+      } catch(e) {
+        showToast('⚠️ Erro ao salvar. Verifique o banco.');
+      } finally {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Publicar pack`;
+      }
+    });
+
+    /* ── Auth guard + Init ── */
+    (async () => {
+      const { createClient } = supabase;
+      const _auth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const { data: { session } } = await _auth.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const email = session.user.email;
+      document.getElementById('conn-badge').insertAdjacentHTML('afterend',
+        `<p style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Logado: <span style="color:var(--text);">${email}</span></p>`);
+
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        await _auth.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      loadAll();
+    })();
+  </script>
+</body>
+</html>
