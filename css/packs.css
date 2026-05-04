@@ -30,55 +30,42 @@
 
 .pack-thumb {
   width: 100%;
-  aspect-ratio: 9 / 16;
-  background: #000;
+  aspect-ratio: 1 / 2; /* Proporção do mockup enviado */
+  background: transparent;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px; /* Espaço para a moldura interna */
+  padding: 18px 12px; /* Espaço para centralizar na tela do mockup */
 }
 
-/* Moldura do Celular (Borda externa) */
+/* O Mockup enviado pelo usuário */
 .pack-thumb::after {
   content: "";
   position: absolute;
   inset: 0;
-  border: 10px solid #1a1a1a;
-  border-radius: 28px;
+  background: url('../assets/mockup.png') no-repeat center center;
+  background-size: contain;
   pointer-events: none;
   z-index: 5;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* Notch / Dynamic Island */
-.pack-thumb::before {
-  content: "";
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30%;
-  height: 12px;
-  background: #000;
-  border-radius: 10px;
-  z-index: 6;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
-}
+/* Remover moldura antiga de código */
+.pack-thumb::before { display: none; }
 
 .pack-thumb img {
-  width: 100%;
-  height: 100%;
+  width: 88%; /* Ajuste para caber na tela do PNG */
+  height: 94%;
   object-fit: cover;
-  border-radius: 20px; /* Arredondamento da "tela" */
+  border-radius: 28px;
   transition: transform 0.7s cubic-bezier(0.165, 0.84, 0.44, 1);
   position: relative;
   z-index: 1;
 }
 
 .pack-card:hover .pack-thumb img {
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 .pack-badge-new {
