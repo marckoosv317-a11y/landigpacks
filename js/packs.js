@@ -65,13 +65,13 @@
     const filePath = `${fileName}`;
 
     const { data, error } = await _db.storage
-      .from('previews')
+      .from('pcksimagem')
       .upload(filePath, file);
 
     if (error) { console.error('Upload error:', error.message); throw error; }
 
     const { data: { publicUrl } } = _db.storage
-      .from('previews')
+      .from('pcksimagem')
       .getPublicUrl(filePath);
 
     return publicUrl;
