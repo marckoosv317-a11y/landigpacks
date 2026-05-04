@@ -111,6 +111,12 @@
         allPacks = await PacksDB.getByCategory(CATEGORY);
         renderTabs(allPacks);
         renderPacks();
+
+        // Update Instagram link
+        const igUrl = await PacksDB.getSetting('instagram_url');
+        if (igUrl) {
+          document.querySelectorAll('a[href*="instagram.com"]').forEach(a => a.href = igUrl);
+        }
       } catch(e) {
         document.getElementById('packs-grid').innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><p>Erro ao carregar packs.<br>Verifique as credenciais do Supabase.</p></div>`;
       }

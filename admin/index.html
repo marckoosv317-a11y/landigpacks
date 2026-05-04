@@ -98,6 +98,18 @@
       </button>
     </div>
 
+    <!-- SETTINGS -->
+    <div class="admin-form fade-in">
+      <h2>🌐 Configurações Globais</h2>
+      <div class="form-group">
+        <label>Link do Instagram (Botão Seguir)</label>
+        <div style="display:flex;gap:10px;">
+          <input id="f-ig-url" type="url" placeholder="https://instagram.com/seu-perfil" />
+          <button class="submit-btn" id="save-settings-btn" style="width:auto;padding:0 20px;margin-top:0;">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- PACK LIST -->
     <div style="margin-bottom:32px;">
       <div class="filter-list-header">
@@ -288,6 +300,28 @@
       document.getElementById('logout-btn').addEventListener('click', async () => {
         await _auth.auth.signOut();
         window.location.href = 'login.html';
+      });
+
+      // Load Instagram Settings
+      const currentIg = await PacksDB.getSetting('instagram_url');
+      if (currentIg) document.getElementById('f-ig-url').value = currentIg;
+
+      // Save Instagram Settings
+      document.getElementById('save-settings-btn').addEventListener('click', async () => {
+        const url = document.getElementById('f-ig-url').value.trim();
+        if (!url) return showToast('⚠️ Digite o link do Instagram.');
+        
+        const btn = document.getElementById('save-settings-btn');
+        btn.classList.add('btn-loading');
+        
+        try {
+          await PacksDB.updateSetting('instagram_url', url);
+          showToast('✅ Link do Instagram atualizado!');
+        } catch(e) {
+          showToast('⚠️ Erro ao salvar configuração.');
+        } finally {
+          btn.classList.remove('btn-loading');
+        }
       });
 
       loadAll();

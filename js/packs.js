@@ -73,6 +73,28 @@
     if (error) { console.error('PacksDB.deleteAll:', error.message); throw error; }
   }
 
+  /* ── SETTINGS ───────────────────────────────────────────────── */
+  async function getSetting(id) {
+    const { data, error } = await _db
+      .from('settings')
+      .select('value')
+      .eq('id', id)
+      .single();
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      console.error('Settings.get:', error.message);
+      return null;
+    }
+    return data ? data.value : null;
+  }
+
+  async function updateSetting(id, value) {
+    const { error } = await _db
+      .from('settings')
+      .upsert({ id, value });
+    if (error) { console.error('Settings.update:', error.message); throw error; }
+  }
+
   /* ── Expose globally ────────────────────────────────────────── */
   window.PacksDB = {
     getAll,
@@ -82,5 +104,7 @@
     delete: deletePack,
     deleteAll,
     formatDate,
+    getSetting,
+    updateSetting
   };
 })();
