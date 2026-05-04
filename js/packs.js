@@ -40,7 +40,7 @@
   }
 
   /* ── CREATE ─────────────────────────────────────────────────── */
-  async function add({ category, type, name, description, downloadUrl }) {
+  async function add({ category, type, name, description, downloadUrl, coverUrl }) {
     const { data, error } = await _db
       .from('packs')
       .insert([{
@@ -49,11 +49,44 @@
         name,
         description,
         download_url: downloadUrl,
+        cover_url: coverUrl,
+        clicks: 0
       }])
       .select()
       .single();
     if (error) { console.error('PacksDB.add:', error.message); throw error; }
     return data;
+  }
+
+  /* ── STORAGE (Upload) ───────────────────────────────────────── */
+  async function uploadPreview(file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await _db.storage
+      .from('previews')
+      .upload(filePath, file);
+
+    if (error) { console.error('Upload error:', error.message); throw error; }
+
+    const { data: { publicUrl } } = _db.storage
+      .from('previews')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  }
+
+  /* ── INTERACTIONS ───────────────────────────────────────────── */
+  async function trackClick(id) {
+    // Increment clicks using a simple RPC or just fetching + updating
+    // For simplicity with vanilla RLS, we'll use a standard update
+    const { data: current } = await _db.from('packs').select('clicks').eq('id', id).single();
+    const newCount = (current?.clicks || 0) + 1;
+    
+    await _db.from('packs')
+      .update({ clicks: newCount })
+      .eq('id', id);
   }
 
   /* ── DELETE ─────────────────────────────────────────────────── */
@@ -105,6 +138,8 @@
     deleteAll,
     formatDate,
     getSetting,
-    updateSetting
+    updateSetting,
+    uploadPreview,
+    trackClick
   };
 })();

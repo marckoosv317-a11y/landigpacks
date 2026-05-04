@@ -84,25 +84,56 @@
     function renderPacks() {
       const el = document.getElementById('packs-grid');
       const packs = activeType==='Todos' ? allPacks : allPacks.filter(p=>p.type===activeType);
+      
       if (!packs.length) {
-        el.innerHTML = `<div class="empty-state"><span class="empty-icon">📦</span><p>Nenhum pack disponível ainda.<br><a href="../admin/index.html">Adicionar no admin →</a></p></div>`;
+        el.innerHTML = `<div class="empty-state" style="grid-column: span 2;"><span class="empty-icon">📦</span><p>Nenhum pack disponível ainda.<br><a href="../admin/index.html">Adicionar no admin →</a></p></div>`;
         return;
       }
-      el.innerHTML = packs.map(p=>`
+
+      el.innerHTML = packs.map(p => {
+        const isNew = (new Date() - new Date(p.created_at)) < (48 * 60 * 60 * 1000);
+        const cover = p.cover_url || 'https://via.placeholder.com/400x400/111/fff?text=Preview';
+        
+        return `
         <div class="pack-card">
-          <div class="pack-card-header">
+          ${isNew ? '<span class="pack-badge-new">Novo</span>' : ''}
+          <div class="pack-thumb">
+            <img src="${esc(cover)}" alt="${esc(p.name)}" loading="lazy">
+            <div class="pack-clicks-badge">🔥 ${p.clicks || 0}</div>
+          </div>
+          <div class="pack-info-wrap">
             <div class="pack-card-name">${esc(p.name)}</div>
-            <span class="pack-type-chip">${esc(p.type)}</span>
+            <div class="pack-card-desc">${esc(p.description)}</div>
+            
+            <div style="display:flex; gap:8px; margin-top:auto;">
+              <a href="${esc(p.download_url)}" 
+                 class="pack-dl-btn" 
+                 target="_blank" 
+                 rel="noopener"
+                 onclick="PacksDB.trackClick('${p.id}')">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Baixar
+              </a>
+              <button class="pack-dl-btn" style="width:40px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);" onclick="sharePack('${esc(p.name)}', '${window.location.href}')">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="pack-card-desc">${esc(p.description)}</div>
-          <div class="pack-card-footer">
-            <span class="pack-date">${PacksDB.formatDate(p.created_at)}</span>
-            <a href="${esc(p.download_url)}" class="pack-dl-btn" target="_blank" rel="noopener">
-              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              Baixar
-            </a>
-          </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
+    }
+
+    function sharePack(name, url) {
+      if (navigator.share) {
+        navigator.share({ title: name, url: url }).catch(() => {});
+      } else {
+        const temp = document.createElement('input');
+        document.body.appendChild(temp);
+        temp.value = url; temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        alert('Link copiado para a área de transferência!');
+      }
     }
 
     (async () => {
